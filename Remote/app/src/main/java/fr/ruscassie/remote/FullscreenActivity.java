@@ -23,9 +23,11 @@ import android.widget.TextView;
  * status bar and navigation/system bar) with user interaction.
  */
 public class FullscreenActivity extends AppCompatActivity {
+    public static final String INITIALISATION_BLUETOOTH = "Initialisation Bluetooth";
     private BluetoothAdapter  bluetoothAdapter;
     private final String TAG = "[GRU]";
     private  TextView textView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -92,7 +94,7 @@ public class FullscreenActivity extends AppCompatActivity {
             SerialService serialService = new SerialService();
             textView.setText("Test socket");
             serialService.connect(socket);
-            serialService.write("Coucou".getBytes());
+            serialService.write(INITIALISATION_BLUETOOTH);
         } catch (Exception e) {
             Log.e(TAG,e.getMessage());
         }
