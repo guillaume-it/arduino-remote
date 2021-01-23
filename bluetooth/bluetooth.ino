@@ -7,8 +7,8 @@ enum CONNECTION_STATUS
   END,
 } connectTionStatus = END;
 
-const static String INITIALISATION_BLUETOOTH = "Initialisation Bluetooth";
-const static String CONNECTED = "Connected";
+const static String BLUETOOTH_INITIALISATION = "BLUETOOTH_INITIALISATION";
+const static String BLUETOOTH_CONNECTED = "BLUETOOTH_CONNECTED";
 
 void setup() {
   // put your setup code here, to run once:
@@ -28,12 +28,12 @@ void loop() {
 
     if (c == '{') {
       connectTionStatus = START;
-      Serial.println("Début transmission");
+   //   Serial.println("Début transmission");
     } else  if (c == '}') {
       connectTionStatus = END;
-      Serial.println("Fin transmission");
-      if (message == INITIALISATION_BLUETOOTH) {
-        Serial.write("Connected");
+    //  Serial.println("Fin transmission");
+      if (message == BLUETOOTH_INITIALISATION) {
+        Serial.println("BLUETOOTH_CONNECTED");
       }
     } else if ( connectTionStatus = START) {
       message += c;

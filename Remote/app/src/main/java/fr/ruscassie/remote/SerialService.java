@@ -6,6 +6,7 @@ import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 
@@ -70,6 +71,17 @@ public class SerialService extends Service implements SerialListener {
         socket.connect(this);
         this.socket = socket;
         connected = true;
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            public void run() {
+                try {
+                    write("{BLUETOOTH_INITIALISATION}");
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, 3000);
     }
 
     public void disconnect() {
@@ -135,6 +147,7 @@ public class SerialService extends Service implements SerialListener {
             synchronized (this) {
                 if (listener != null) {
                     mainLooper.post(() -> {
+                        Log.i("TAG",new String(data));
                         if (listener != null) {
                             listener.onSerialRead(data);
                         } else {

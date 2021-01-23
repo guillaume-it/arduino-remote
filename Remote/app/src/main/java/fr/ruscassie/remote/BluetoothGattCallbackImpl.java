@@ -433,6 +433,7 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
     }
 
     private void onSerialRead(byte[] data) {
+        Log.i(TAG,"DATA: "+new String(data));
         if (listener != null)
             listener.onSerialRead(data);
     }
