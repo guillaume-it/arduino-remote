@@ -18,20 +18,23 @@ import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
+import java.io.IOException;
+
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
 public class FullscreenActivity extends AppCompatActivity {
     public static final String INITIALISATION_BLUETOOTH = "Initialisation Bluetooth";
-    private BluetoothAdapter  bluetoothAdapter;
+    private BluetoothAdapter bluetoothAdapter;
     private final String TAG = "[GRU]";
-    private  TextView textView;
+    private TextView textView;
+    private SerialService serialService = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.i(TAG,"on Create");
+        Log.i(TAG, "on Create");
         setContentView(R.layout.activity_fullscreen);
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
@@ -41,7 +44,7 @@ public class FullscreenActivity extends AppCompatActivity {
         filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
         registerReceiver(receiver, filter);
-         textView = findViewById(R.id.information);
+        textView = findViewById(R.id.information);
     }
 
     @Override
@@ -49,16 +52,26 @@ public class FullscreenActivity extends AppCompatActivity {
         super.onPostCreate(savedInstanceState);
     }
 
-    public void onClickButtonBluetootConnect(View view){
+    public void onClickButtonBluetootConnect(View view) {
         checkBluetoothPermission();
-        Log.i(TAG,"test");
+        Log.i(TAG, "test");
 
-        if(!bluetoothAdapter.isDiscovering()) {
+        if (!bluetoothAdapter.isDiscovering()) {
             bluetoothAdapter.startDiscovery();
             textView.setText("Start discovery");
-        }else{
+        } else {
             bluetoothAdapter.cancelDiscovery();
             textView.setText("Cancel discovery");
+        }
+    }
+
+    public void onClickTest(View view) {
+        if(serialService != null) {
+            try {
+                serialService.write("Coucou");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -73,8 +86,8 @@ public class FullscreenActivity extends AppCompatActivity {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 String deviceName = device.getName();
                 String deviceHardwareAddress = device.getAddress(); // MAC address
-                Log.i(TAG,deviceName +" "+deviceHardwareAddress);
-                if(deviceName!= null && deviceName.equals("ELEGOO BT16")) {
+                Log.i(TAG, deviceName + " " + deviceHardwareAddress);
+                if (deviceName != null && deviceName.equals("ELEGOO BT16")) {
                     textView.setText("ELEGOO detected");
                     connect(deviceHardwareAddress);
                 }
@@ -90,17 +103,17 @@ public class FullscreenActivity extends AppCompatActivity {
             BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
             BluetoothDevice device = bluetoothAdapter.getRemoteDevice(deviceAddress);
 
-            BluetoothGattCallbackImpl socket = new BluetoothGattCallbackImpl( this.getApplicationContext(), device);
-            SerialService serialService = new SerialService();
+            BluetoothGattCallbackImpl socket = new BluetoothGattCallbackImpl(this.getApplicationContext(), device);
+            serialService = new SerialService();
             textView.setText("Test socket");
             serialService.connect(socket);
-           serialService.write(INITIALISATION_BLUETOOTH);
+            // serialService.write(INITIALISATION_BLUETOOTH);
         } catch (Exception e) {
-            Log.e(TAG,e.getMessage());
+            Log.e(TAG, e.getMessage());
         }
     }
 
-    private void checkBluetoothPermission(){
+    private void checkBluetoothPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
                     Manifest.permission.ACCESS_BACKGROUND_LOCATION)

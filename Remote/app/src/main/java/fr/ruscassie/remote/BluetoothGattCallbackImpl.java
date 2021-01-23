@@ -31,7 +31,7 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
     /**
      * delegate device specific behaviour to inner class
      */
-    private class DeviceDelegate {
+    public class DeviceDelegate {
         boolean connectCharacteristics(BluetoothGattService s) { return true; }
         // following methods only overwritten for Telit devices
         void onDescriptorWrite(BluetoothGatt g, BluetoothGattDescriptor d, int status) { /*nop*/ }
@@ -145,7 +145,7 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
     /**
      * connect-success and most connect-errors are returned asynchronously to listener
      */
-    void connect(SerialListener listener) throws IOException {
+    public void connect(SerialListener listener) throws IOException {
         if(connected || gatt != null)
             throw new IOException("already connected");
         canceled = false;
@@ -163,7 +163,6 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
         if (gatt == null)
             throw new IOException("connectGatt failed");
         // continues asynchronously in onPairingBroadcastReceive() and onConnectionStateChange()
-
     }
 
     private void onPairingBroadcastReceive(Context context, Intent intent) {
@@ -268,6 +267,7 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
             Log.d(TAG, "payload size "+payloadSize);
         }
         connectCharacteristics3(gatt);
+
     }
 
     private void connectCharacteristics3(BluetoothGatt gatt) {
