@@ -90,11 +90,11 @@ public class FullscreenActivity extends AppCompatActivity {
             BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
             BluetoothDevice device = bluetoothAdapter.getRemoteDevice(deviceAddress);
 
-            SerialSocket socket = new SerialSocket( this.getApplicationContext(), device);
+            BluetoothGattCallbackImpl socket = new BluetoothGattCallbackImpl( this.getApplicationContext(), device);
             SerialService serialService = new SerialService();
             textView.setText("Test socket");
             serialService.connect(socket);
-            serialService.write(INITIALISATION_BLUETOOTH);
+           serialService.write(INITIALISATION_BLUETOOTH);
         } catch (Exception e) {
             Log.e(TAG,e.getMessage());
         }

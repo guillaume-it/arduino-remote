@@ -1,27 +1,20 @@
 package fr.ruscassie.remote;
 
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
-import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 
 import androidx.annotation.Nullable;
-import androidx.core.app.NotificationCompat;
 
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Queue;
 
 /**
- * create notification and queue serial data while activity is not in the foreground
+ * Create notification and queue serial data while activity is not in the foreground
  * use listener chain: SerialSocket -> SerialService -> UI fragment
  */
 public class SerialService extends Service implements SerialListener {
@@ -44,7 +37,7 @@ public class SerialService extends Service implements SerialListener {
     private final IBinder binder;
     private final Queue<QueueItem> queue1, queue2;
 
-    private SerialSocket socket;
+    private BluetoothGattCallbackImpl socket;
     private SerialListener listener;
     private boolean connected;
 
@@ -73,7 +66,7 @@ public class SerialService extends Service implements SerialListener {
     /**
      * Api
      */
-    public void connect(SerialSocket socket) throws IOException {
+    public void connect(BluetoothGattCallbackImpl socket) throws IOException {
         socket.connect(this);
         this.socket = socket;
         connected = true;

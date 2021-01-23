@@ -26,7 +26,7 @@ import java.util.UUID;
  *   - connect, disconnect and write as methods,
  *   - read + status is returned by SerialListener
  */
-class SerialSocket extends BluetoothGattCallback {
+class BluetoothGattCallbackImpl extends BluetoothGattCallback {
 
     /**
      * delegate device specific behaviour to inner class
@@ -61,7 +61,7 @@ class SerialSocket extends BluetoothGattCallback {
 
     private static final int MAX_MTU = 512; // BLE standard does not limit, some BLE 4.2 devices support 251, various source say that Android has max 512
     private static final int DEFAULT_MTU = 23;
-    private static final String TAG = "SerialSocket";
+    private static final String TAG = "[GATT]";
 
     private final ArrayList<byte[]> writeBuffer;
     private final IntentFilter pairingIntentFilter;
@@ -80,7 +80,7 @@ class SerialSocket extends BluetoothGattCallback {
     private boolean connected;
     private int payloadSize = DEFAULT_MTU-3;
 
-    SerialSocket(Context context, BluetoothDevice device) {
+    BluetoothGattCallbackImpl(Context context, BluetoothDevice device) {
         if(context instanceof Activity)
             throw new InvalidParameterException("expected non UI context");
         this.context = context;
@@ -163,6 +163,7 @@ class SerialSocket extends BluetoothGattCallback {
         if (gatt == null)
             throw new IOException("connectGatt failed");
         // continues asynchronously in onPairingBroadcastReceive() and onConnectionStateChange()
+
     }
 
     private void onPairingBroadcastReceive(Context context, Intent intent) {
