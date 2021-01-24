@@ -24,18 +24,18 @@ void loop() {
   {
 
     c =   (char)Serial.read();
-    Serial.println(c);
 
     if (c == '{') {
       connectTionStatus = START;
-   //   Serial.println("Début transmission");
+      Serial.println("LOG: Début transmission");
     } else  if (c == '}') {
       connectTionStatus = END;
-    //  Serial.println("Fin transmission");
+      Serial.println("LOG: Fin transmission");
       if (message == BLUETOOTH_INITIALISATION) {
         Serial.println("BLUETOOTH_CONNECTED");
+        message = "";
       }
-    } else if ( connectTionStatus = START) {
+    } else if ( connectTionStatus == START) {
       message += c;
     }
   }

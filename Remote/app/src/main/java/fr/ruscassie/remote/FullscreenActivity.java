@@ -24,7 +24,7 @@ import java.io.IOException;
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
-public class FullscreenActivity extends AppCompatActivity {
+public class FullscreenActivity extends AppCompatActivity  {
     public static final String INITIALISATION_BLUETOOTH = "Initialisation Bluetooth";
     private BluetoothAdapter bluetoothAdapter;
     private final String TAG = "[GRU]";
@@ -34,6 +34,7 @@ public class FullscreenActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         Log.i(TAG, "on Create");
         setContentView(R.layout.activity_fullscreen);
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -45,6 +46,13 @@ public class FullscreenActivity extends AppCompatActivity {
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
         registerReceiver(receiver, filter);
         textView = findViewById(R.id.information);
+
+        JoystickView joystickViewRight = findViewById(R.id.joystickRight);
+        joystickViewRight.setJoystickCallback(new JoystickListener());
+
+        JoystickView joystickViewLeft = findViewById(R.id.joystickLeft);
+        joystickViewLeft.setJoystickCallback(new JoystickListener());
+
     }
 
     @Override

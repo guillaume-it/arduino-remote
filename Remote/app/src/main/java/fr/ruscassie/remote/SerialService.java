@@ -11,7 +11,9 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 
 /**
@@ -24,32 +26,18 @@ public class SerialService extends Service implements SerialListener {
         SerialService getService() { return SerialService.this; }
     }
 
-    private enum QueueType {Connect, ConnectError, Read, IoError}
-
-    private class QueueItem {
-        QueueType type;
-        byte[] data;
-        Exception e;
-
-        QueueItem(QueueType type, byte[] data, Exception e) { this.type=type; this.data=data; this.e=e; }
-    }
-
-    private final Handler mainLooper;
     private final IBinder binder;
-    private final Queue<QueueItem> queue1, queue2;
+    private final Queue<String> queue;
 
     private BluetoothGattCallbackImpl socket;
-    private SerialListener listener;
     private boolean connected;
 
     /**
      * Lifecycle
      */
     public SerialService() {
-        mainLooper = new Handler(Looper.getMainLooper());
         binder = new SerialBinder();
-        queue1 = new LinkedList<>();
-        queue2 = new LinkedList<>();
+        queue = new LinkedList<>();
     }
 
     @Override
@@ -106,17 +94,7 @@ public class SerialService extends Service implements SerialListener {
     public void onSerialConnect() {
         if(connected) {
             synchronized (this) {
-                if (listener != null) {
-                    mainLooper.post(() -> {
-                        if (listener != null) {
-                            listener.onSerialConnect();
-                        } else {
-                            queue1.add(new QueueItem(QueueType.Connect, null, null));
-                        }
-                    });
-                } else {
-                    queue2.add(new QueueItem(QueueType.Connect, null, null));
-                }
+
             }
         }
     }
@@ -124,59 +102,24 @@ public class SerialService extends Service implements SerialListener {
     public void onSerialConnectError(Exception e) {
         if(connected) {
             synchronized (this) {
-                if (listener != null) {
-                    mainLooper.post(() -> {
-                        if (listener != null) {
-                            listener.onSerialConnectError(e);
-                        } else {
-                            queue1.add(new QueueItem(QueueType.ConnectError, null, e));
-                            disconnect();
-                        }
-                    });
-                } else {
-                    queue2.add(new QueueItem(QueueType.ConnectError, null, e));
 
-                    disconnect();
-                }
             }
         }
     }
+    //text\r\nLOG: Fin trans
     @Override
     public void onSerialRead(byte[] data) {
-        if(connected) {
+        //if(connected) {
             synchronized (this) {
-                if (listener != null) {
-                    mainLooper.post(() -> {
-                        Log.i("TAG",new String(data));
-                        if (listener != null) {
-                            listener.onSerialRead(data);
-                        } else {
-                            queue1.add(new QueueItem(QueueType.Read, data, null));
-                        }
-                    });
-                } else {
-                    queue2.add(new QueueItem(QueueType.Read, data, null));
-                }
+                queue.add(new String(data));
             }
-        }
+        //}
     }
     @Override
     public void onSerialIoError(Exception e) {
         if(connected) {
             synchronized (this) {
-                if (listener != null) {
-                    mainLooper.post(() -> {
-                        if (listener != null) {
-                            listener.onSerialIoError(e);
-                        } else {
-                            queue1.add(new QueueItem(QueueType.IoError, null, e));
-                            disconnect();
-                        }
-                    });
-                } else {
-                    queue2.add(new QueueItem(QueueType.IoError, null, e));
-                    disconnect();
-                }
+
             }
         }
     }

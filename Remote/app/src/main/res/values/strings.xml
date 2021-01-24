@@ -3,4 +3,6 @@
     <string name="dummy_content">DUMMY\nCONTENT</string>
     <string name="button_bluetooth_connect">Connect</string>
     <string name="pairing_request">pairing request</string>
+    <string name="Information">Information</string>
+    <string name="Test">Test</string>
 </resources>

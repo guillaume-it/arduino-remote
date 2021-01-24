@@ -16,40 +16,60 @@
          android:fitsSystemWindows. -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="495dp">
+        android:layout_height="match_parent">
 
         <Button
             android:id="@+id/button_bluetooth"
-            android:layout_width="212dp"
-            android:layout_height="94dp"
-            android:layout_marginTop="80dp"
+            android:layout_width="112dp"
+            android:layout_height="49dp"
+            android:layout_marginTop="52dp"
             android:onClick="onClickButtonBluetootConnect"
             android:text="@string/button_bluetooth_connect"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.487"
+            app:layout_constraintHorizontal_bias="0.484"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/information"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Coucou"
+            android:layout_width="716dp"
+            android:layout_height="35dp"
+            android:text="@string/Information"
             app:layout_constraintBottom_toTopOf="@+id/button_bluetooth"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.466"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.066" />
 
         <Button
             android:id="@+id/button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="48dp"
+            android:layout_marginTop="12dp"
             android:onClick="onClickTest"
-            android:text="Button"
+            android:text="@string/Test"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.484"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/button_bluetooth" />
+
+        <fr.ruscassie.remote.JoystickView
+            android:id="@+id/joystickLeft"
+            android:layout_width="300dp"
+            android:layout_height="300dp"
+            android:layout_weight="1"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <fr.ruscassie.remote.JoystickView
+            android:id="@+id/joystickRight"
+            android:layout_width="300dp"
+            android:layout_height="300dp"
+            android:layout_weight="1"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </FrameLayout>
