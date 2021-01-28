@@ -141,13 +141,15 @@ private String value;
 
         int start = dataRead.indexOf("{")+1;
         int end = dataRead.indexOf("}");
-
-        if (start > 0 && end > 0) {
+if(end<start){
+    end = dataRead.indexOf("}",start);
+}
+        if (start >= 0 && end >= 0 && start < end) {
            String message = dataRead.substring(start, end);
            String [] split = message.split(":");
 
-            stringBuffer.delete(start, end);
-            
+           // stringBuffer.delete(start, end);
+            stringBuffer.delete(0,stringBuffer.length());
             Log.i(TAG,message);
             switch (split[0]){
                case "INIT":
@@ -155,13 +157,15 @@ private String value;
                 break;
                 case "START":
                     connected = true;
-                    value = split[1];
+                    if(split.length>1) {
+                        value = split[1];
+                    }
                     break;
                 case "LOG":
                     value = split[1];
                     break;
                 default:
-                    throw new IllegalStateException("Unexpected value: " + split[0]);
+                  Log.i(TAG,"message: "+message + " value: "+ value);
             }
         }
     }
