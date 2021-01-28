@@ -16,33 +16,46 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
+import static android.webkit.ConsoleMessage.MessageLevel.LOG;
+
 /**
  * Create notification and queue serial data while activity is not in the foreground
  * use listener chain: SerialSocket -> SerialService -> UI fragment
  */
 public class SerialService extends Service implements SerialListener {
 
+    private String TAG = "[SerialService]";
+
     class SerialBinder extends Binder {
-        SerialService getService() { return SerialService.this; }
+        SerialService getService() {
+            return SerialService.this;
+        }
     }
 
-    private final IBinder binder;
-    private final Queue<String> queue;
-
+    private final IBinder binder = new SerialBinder();
+    private final Queue<String> queue = new LinkedList<>();
+    private final StringBuffer stringBuffer = new StringBuffer();
     private BluetoothGattCallbackImpl socket;
     private boolean connected;
+private String value;
+    public StringBuffer getStringBuffer() {
+        return stringBuffer;
+    }
+
+    public String getValue() {
+        return value;
+    }
 
     /**
      * Lifecycle
      */
     public SerialService() {
-        binder = new SerialBinder();
-        queue = new LinkedList<>();
+
     }
 
     @Override
     public void onDestroy() {
-         disconnect();
+        disconnect();
         super.onDestroy();
     }
 
@@ -63,10 +76,10 @@ public class SerialService extends Service implements SerialListener {
         handler.postDelayed(new Runnable() {
             public void run() {
                 try {
-                    write("{BLUETOOTH_INITIALISATION}");
+                    write("{INIT}");
 
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    Log.e(TAG,e.getMessage());
                 }
             }
         }, 3000);
@@ -74,16 +87,16 @@ public class SerialService extends Service implements SerialListener {
 
     public void disconnect() {
         connected = false; // ignore data,errors while disconnecting
-         if(socket != null) {
+        if (socket != null) {
             socket.disconnect();
             socket = null;
         }
     }
 
     public void write(String data) throws IOException {
-        if(!connected)
+        if (!connected)
             throw new IOException("not connected");
-        byte[] bytes = new String("{"+data+"}").getBytes();
+        byte[] bytes = new String("{" + data + "}").getBytes();
         socket.write(bytes);
     }
 
@@ -92,32 +105,70 @@ public class SerialService extends Service implements SerialListener {
      */
     @Override
     public void onSerialConnect() {
-        if(connected) {
+        if (connected) {
             synchronized (this) {
 
             }
         }
     }
+
     @Override
     public void onSerialConnectError(Exception e) {
-        if(connected) {
+        if (connected) {
             synchronized (this) {
 
             }
         }
     }
+
     //text\r\nLOG: Fin trans
     @Override
     public void onSerialRead(byte[] data) {
         //if(connected) {
-            synchronized (this) {
-                queue.add(new String(data));
-            }
+        synchronized (this) {
+            final String dataRead = new String(data);
+            stringBuffer.append(dataRead);
+            manageMessage(stringBuffer);
+
+
+        }
         //}
     }
+
+    private void manageMessage(StringBuffer stringBuffer) {
+        //message.split(":");
+        String dataRead = stringBuffer.toString();
+
+        int start = dataRead.indexOf("{")+1;
+        int end = dataRead.indexOf("}");
+
+        if (start > 0 && end > 0) {
+           String message = dataRead.substring(start, end);
+           String [] split = message.split(":");
+
+            stringBuffer.delete(start, end);
+            
+            Log.i(TAG,message);
+            switch (split[0]){
+               case "INIT":
+                   value = split[1];
+                break;
+                case "START":
+                    connected = true;
+                    value = split[1];
+                    break;
+                case "LOG":
+                    value = split[1];
+                    break;
+                default:
+                    throw new IllegalStateException("Unexpected value: " + split[0]);
+            }
+        }
+    }
+
     @Override
     public void onSerialIoError(Exception e) {
-        if(connected) {
+        if (connected) {
             synchronized (this) {
 
             }
