@@ -110,7 +110,7 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
     }
 
     void disconnect() {
-        Log.d(TAG, "disconnect");
+       // Log.d(TAG, "disconnect");
         listener = null; // ignore remaining data and errors
         device = null;
         canceled = true;
@@ -123,9 +123,9 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
         if(delegate != null)
             delegate.disconnect();
         if (gatt != null) {
-            Log.d(TAG, "gatt.disconnect");
+           // Log.d(TAG, "gatt.disconnect");
             gatt.disconnect();
-            Log.d(TAG, "gatt.close");
+           // Log.d(TAG, "gatt.close");
             try {
                 gatt.close();
             } catch (Exception ignored) {}
@@ -151,13 +151,13 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
         canceled = false;
         this.listener = listener;
         context.registerReceiver(disconnectBroadcastReceiver, new IntentFilter(Constants.INTENT_ACTION_DISCONNECT));
-        Log.d(TAG, "connect "+device);
+       // Log.d(TAG, "connect "+device);
         context.registerReceiver(pairingBroadcastReceiver, pairingIntentFilter);
         if (Build.VERSION.SDK_INT < 23) {
-            Log.d(TAG, "connectGatt");
+           // Log.d(TAG, "connectGatt");
             gatt = device.connectGatt(context, false, this);
         } else {
-            Log.d(TAG, "connectGatt,LE");
+           // Log.d(TAG, "connectGatt,LE");
             gatt = device.connectGatt(context, false, this, BluetoothDevice.TRANSPORT_LE);
         }
         if (gatt == null)
@@ -174,14 +174,14 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
         switch (intent.getAction()) {
             case BluetoothDevice.ACTION_PAIRING_REQUEST:
                 final int pairingVariant = intent.getIntExtra(BluetoothDevice.EXTRA_PAIRING_VARIANT, -1);
-                Log.d(TAG, "pairing request " + pairingVariant);
+               // Log.d(TAG, "pairing request " + pairingVariant);
                 onSerialConnectError(new IOException(context.getString(R.string.pairing_request)));
                 // pairing dialog brings app to background (onPause), but it is still partly visible (no onStop), so there is no automatic disconnect()
                 break;
             case BluetoothDevice.ACTION_BOND_STATE_CHANGED:
                 final int bondState = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, -1);
                 final int previousBondState = intent.getIntExtra(BluetoothDevice.EXTRA_PREVIOUS_BOND_STATE, -1);
-                Log.d(TAG, "bond state " + previousBondState + "->" + bondState);
+               // Log.d(TAG, "bond state " + previousBondState + "->" + bondState);
                 break;
             default:
                 Log.d(TAG, "unknown broadcast " + intent.getAction());
@@ -193,7 +193,7 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
     public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
         // status directly taken from gat_api.h, e.g. 133=0x85=GATT_ERROR ~= timeout
         if (newState == BluetoothProfile.STATE_CONNECTED) {
-            Log.d(TAG,"connect status "+status+", discoverServices");
+           // Log.d(TAG,"connect status "+status+", discoverServices");
             if (!gatt.discoverServices())
                 onSerialConnectError(new IOException("discoverServices failed"));
         } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
@@ -202,14 +202,14 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
             else
                 onSerialConnectError(new IOException("gatt status " + status));
         } else {
-            Log.d(TAG, "unknown connect state "+newState+" "+status);
+           // Log.d(TAG, "unknown connect state "+newState+" "+status);
         }
         // continues asynchronously in onServicesDiscovered()
     }
 
     @Override
     public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-        Log.d(TAG, "servicesDiscovered, status " + status);
+       // Log.d(TAG, "servicesDiscovered, status " + status);
         if (canceled)
             return;
         connectCharacteristics1(gatt);
@@ -236,11 +236,11 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
         if(canceled)
             return;
         if(delegate==null || readCharacteristic==null || writeCharacteristic==null) {
-            for (BluetoothGattService gattService : gatt.getServices()) {
-                Log.d(TAG, "service "+gattService.getUuid());
-                for(BluetoothGattCharacteristic characteristic : gattService.getCharacteristics())
-                    Log.d(TAG, "characteristic "+characteristic.getUuid());
-            }
+          //  for (BluetoothGattService gattService : gatt.getServices()) {
+               // Log.d(TAG, "service "+gattService.getUuid());
+              //  for(BluetoothGattCharacteristic characteristic : gattService.getCharacteristics())
+                   // Log.d(TAG, "characteristic "+characteristic.getUuid());
+            //}
             onSerialConnectError(new IOException("no serial profile found"));
             return;
         }
@@ -250,7 +250,7 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
 
     private void connectCharacteristics2(BluetoothGatt gatt) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            Log.d(TAG, "request max MTU");
+           // Log.d(TAG, "request max MTU");
             if (!gatt.requestMtu(MAX_MTU))
                 onSerialConnectError(new IOException("request MTU failed"));
             // continues asynchronously in onMtuChanged
@@ -261,10 +261,10 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
 
     @Override
     public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
-        Log.d(TAG,"mtu size "+mtu+", status="+status);
+       // Log.d(TAG,"mtu size "+mtu+", status="+status);
         if(status ==  BluetoothGatt.GATT_SUCCESS) {
             payloadSize = mtu - 3;
-            Log.d(TAG, "payload size "+payloadSize);
+           // Log.d(TAG, "payload size "+payloadSize);
         }
         connectCharacteristics3(gatt);
 
@@ -288,16 +288,16 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
         }
         int readProperties = readCharacteristic.getProperties();
         if((readProperties & BluetoothGattCharacteristic.PROPERTY_INDICATE) != 0) {
-            Log.d(TAG, "enable read indication");
+           // Log.d(TAG, "enable read indication");
             readDescriptor.setValue(BluetoothGattDescriptor.ENABLE_INDICATION_VALUE);
         }else if((readProperties & BluetoothGattCharacteristic.PROPERTY_NOTIFY) != 0) {
-            Log.d(TAG, "enable read notification");
+           // Log.d(TAG, "enable read notification");
             readDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
         } else {
             onSerialConnectError(new IOException("no indication/notification for read characteristic ("+readProperties+")"));
             return;
         }
-        Log.d(TAG,"writing read characteristic descriptor");
+       // Log.d(TAG,"writing read characteristic descriptor");
         if(!gatt.writeDescriptor(readDescriptor)) {
             onSerialConnectError(new IOException("read characteristic CCCD descriptor not writable"));
         }
@@ -310,7 +310,7 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
         if(canceled)
             return;
         if(descriptor.getCharacteristic() == readCharacteristic) {
-            Log.d(TAG,"writing read characteristic descriptor finished, status="+status);
+           // Log.d(TAG,"writing read characteristic descriptor finished, status="+status);
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 onSerialConnectError(new IOException("write descriptor failed"));
             } else {
@@ -318,7 +318,7 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
                 // before confirmed by this method, so receive data can be shown before device is shown as 'Connected'.
                 onSerialConnect();
                 connected = true;
-                Log.d(TAG, "connected");
+               // Log.d(TAG, "connected");
             }
         }
     }
@@ -336,7 +336,7 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
         if(characteristic == readCharacteristic) { // NOPMD - test object identity
             byte[] data = readCharacteristic.getValue();
             onSerialRead(data);
-            Log.d(TAG,"read, len="+data.length);
+           // Log.d(TAG,"read, len="+data.length);
         }
     }
 
@@ -357,7 +357,7 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
                 writePending = true;
             } else {
                 writeBuffer.add(data0);
-                Log.d(TAG,"write queued, len="+data0.length);
+               // Log.d(TAG,"write queued, len="+data0.length);
                 data0 = null;
             }
             if(data.length > payloadSize) {
@@ -365,7 +365,7 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
                     int from = i*payloadSize;
                     int to = Math.min(from+payloadSize, data.length);
                     writeBuffer.add(Arrays.copyOfRange(data, from, to));
-                    Log.d(TAG,"write queued, len="+(to-from));
+                   // Log.d(TAG,"write queued, len="+(to-from));
                 }
             }
         }
@@ -374,7 +374,7 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
             if (!gatt.writeCharacteristic(writeCharacteristic)) {
                 onSerialIoError(new IOException("write failed"));
             } else {
-                Log.d(TAG,"write started, len="+data0.length);
+               // Log.d(TAG,"write started, len="+data0.length);
             }
         }
         // continues asynchronously in onCharacteristicWrite()
@@ -392,7 +392,7 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
         if(canceled)
             return;
         if(characteristic == writeCharacteristic) { // NOPMD - test object identity
-            Log.d(TAG,"write finished, status="+status);
+           // Log.d(TAG,"write finished, status="+status);
             writeNext();
         }
     }
@@ -413,7 +413,7 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
             if (!gatt.writeCharacteristic(writeCharacteristic)) {
                 onSerialIoError(new IOException("write failed"));
             } else {
-                Log.d(TAG,"write started, len="+data.length);
+               // Log.d(TAG,"write started, len="+data.length);
             }
         }
     }
@@ -433,7 +433,7 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
     }
 
     private void onSerialRead(byte[] data) {
-        Log.i(TAG,"onSerialRead DATA: "+new String(data));
+       // Log.i(TAG,"onSerialRead DATA: "+new String(data));
         if (listener != null)
             listener.onSerialRead(data);
     }
@@ -452,7 +452,7 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
     private class Cc245XDelegate extends DeviceDelegate {
         @Override
         boolean connectCharacteristics(BluetoothGattService gattService) {
-            Log.d(TAG, "service cc254x uart");
+           // Log.d(TAG, "service cc254x uart");
             readCharacteristic = gattService.getCharacteristic(BLUETOOTH_LE_CC254X_CHAR_RW);
             writeCharacteristic = gattService.getCharacteristic(BLUETOOTH_LE_CC254X_CHAR_W);
             return true;
@@ -462,7 +462,7 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
     private class Rn4870Delegate extends DeviceDelegate {
         @Override
         boolean connectCharacteristics(BluetoothGattService gattService) {
-            Log.d(TAG, "service rn4870 uart");
+           // Log.d(TAG, "service rn4870 uart");
             readCharacteristic = gattService.getCharacteristic(BLUETOOTH_LE_RN4870_CHAR_RW);
             writeCharacteristic = gattService.getCharacteristic(BLUETOOTH_LE_RN4870_CHAR_RW);
             return true;
@@ -472,7 +472,7 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
     private class NrfDelegate extends DeviceDelegate {
         @Override
         boolean connectCharacteristics(BluetoothGattService gattService) {
-            Log.d(TAG, "service nrf uart");
+           // Log.d(TAG, "service nrf uart");
             BluetoothGattCharacteristic rw2 = gattService.getCharacteristic(BLUETOOTH_LE_NRF_CHAR_RW2);
             BluetoothGattCharacteristic rw3 = gattService.getCharacteristic(BLUETOOTH_LE_NRF_CHAR_RW3);
             if (rw2 != null && rw3 != null) {
@@ -480,7 +480,7 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
                 int rw3prop = rw3.getProperties();
                 boolean rw2write = (rw2prop & BluetoothGattCharacteristic.PROPERTY_WRITE) != 0;
                 boolean rw3write = (rw3prop & BluetoothGattCharacteristic.PROPERTY_WRITE) != 0;
-                Log.d(TAG, "characteristic properties " + rw2prop + "/" + rw3prop);
+               // Log.d(TAG, "characteristic properties " + rw2prop + "/" + rw3prop);
                 if (rw2write && rw3write) {
                     onSerialConnectError(new IOException("multiple write characteristics (" + rw2prop + "/" + rw3prop + ")"));
                 } else if (rw2write) {
@@ -503,7 +503,7 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
 
         @Override
         boolean connectCharacteristics(BluetoothGattService gattService) {
-            Log.d(TAG, "service telit tio 2.0");
+           // Log.d(TAG, "service telit tio 2.0");
             readCredits = 0;
             writeCredits = 0;
             readCharacteristic = gattService.getCharacteristic(BLUETOOTH_LE_TIO_CHAR_RX);
@@ -536,12 +536,12 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
                 return false;
             }
             readCreditsDescriptor.setValue(BluetoothGattDescriptor.ENABLE_INDICATION_VALUE);
-            Log.d(TAG,"writing read credits characteristic descriptor");
+           // Log.d(TAG,"writing read credits characteristic descriptor");
             if (!gatt.writeDescriptor(readCreditsDescriptor)) {
                 onSerialConnectError(new IOException("read credits characteristic CCCD descriptor not writable"));
                 return false;
             }
-            Log.d(TAG, "writing read credits characteristic descriptor");
+           // Log.d(TAG, "writing read credits characteristic descriptor");
             return false;
             // continues asynchronously in connectCharacteristics2
         }
@@ -549,7 +549,7 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
         @Override
         void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
             if(descriptor.getCharacteristic() == readCreditsCharacteristic) {
-                Log.d(TAG, "writing read credits characteristic descriptor finished, status=" + status);
+               // Log.d(TAG, "writing read credits characteristic descriptor finished, status=" + status);
                 if (status != BluetoothGatt.GATT_SUCCESS) {
                     onSerialConnectError(new IOException("write credits descriptor failed"));
                 } else {
@@ -557,7 +557,7 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
                 }
             }
             if(descriptor.getCharacteristic() == readCharacteristic) {
-                Log.d(TAG, "writing read characteristic descriptor finished, status=" + status);
+               // Log.d(TAG, "writing read characteristic descriptor finished, status=" + status);
                 if (status == BluetoothGatt.GATT_SUCCESS) {
                     readCharacteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
                     writeCharacteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
@@ -575,16 +575,16 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
                 synchronized (writeBuffer) {
                     writeCredits += newCredits;
                 }
-                Log.d(TAG, "got write credits +"+newCredits+" ="+writeCredits);
+               // Log.d(TAG, "got write credits +"+newCredits+" ="+writeCredits);
 
                 if (!writePending && !writeBuffer.isEmpty()) {
-                    Log.d(TAG, "resume blocked write");
+                   // Log.d(TAG, "resume blocked write");
                     writeNext();
                 }
             }
             if(characteristic == readCharacteristic) { // NOPMD - test object identity
                 grantReadCredits();
-                Log.d(TAG, "read, credits=" + readCredits);
+               // Log.d(TAG, "read, credits=" + readCredits);
             }
         }
 
@@ -595,10 +595,10 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
                     if (writeCredits > 0)
                         writeCredits -= 1;
                 }
-                Log.d(TAG, "write finished, credits=" + writeCredits);
+               // Log.d(TAG, "write finished, credits=" + writeCredits);
             }
             if(characteristic == writeCreditsCharacteristic) { // NOPMD - test object identity
-                Log.d(TAG,"write credits finished, status="+status);
+               // Log.d(TAG,"write credits finished, status="+status);
             }
         }
 
@@ -606,7 +606,7 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
         boolean canWrite() {
             if(writeCredits > 0)
                 return true;
-            Log.d(TAG, "no write credits");
+           // Log.d(TAG, "no write credits");
             return false;
         }
 
@@ -625,7 +625,7 @@ class BluetoothGattCallbackImpl extends BluetoothGattCallback {
                 int newCredits = maxReadCredits - readCredits;
                 readCredits += newCredits;
                 byte[] data = new byte[] {(byte)newCredits};
-                Log.d(TAG, "grant read credits +"+newCredits+" ="+readCredits);
+               // Log.d(TAG, "grant read credits +"+newCredits+" ="+readCredits);
                 writeCreditsCharacteristic.setValue(data);
                 if (!gatt.writeCharacteristic(writeCreditsCharacteristic)) {
                     if(connected)

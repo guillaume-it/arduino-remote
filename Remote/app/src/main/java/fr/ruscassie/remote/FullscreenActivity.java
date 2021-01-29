@@ -30,6 +30,8 @@ public class FullscreenActivity extends AppCompatActivity  {
     private final String TAG = "[GRU]";
     private TextView textView;
     private SerialService serialService = null;
+    private JoystickListener joystickListenerRight = new JoystickListener();
+    private JoystickListener joystickListenerLeft = new JoystickListener();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,10 +50,10 @@ public class FullscreenActivity extends AppCompatActivity  {
         textView = findViewById(R.id.information);
 
         JoystickView joystickViewRight = findViewById(R.id.joystickRight);
-        joystickViewRight.setJoystickCallback(new JoystickListener());
+        joystickViewRight.setJoystickCallback(joystickListenerRight);
 
         JoystickView joystickViewLeft = findViewById(R.id.joystickLeft);
-        joystickViewLeft.setJoystickCallback(new JoystickListener());
+        joystickViewLeft.setJoystickCallback(joystickListenerLeft);
 
     }
 
@@ -74,13 +76,7 @@ public class FullscreenActivity extends AppCompatActivity  {
     }
 
     public void onClickTest(View view) {
-        if(serialService != null) {
-            try {
-                serialService.write("Coucou");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+
     }
 
     // Create a BroadcastReceiver for ACTION_FOUND.
@@ -115,7 +111,9 @@ public class FullscreenActivity extends AppCompatActivity  {
             serialService = new SerialService();
             textView.setText("Test socket");
             serialService.connect(socket);
-            // serialService.write(INITIALISATION_BLUETOOTH);
+            joystickListenerLeft.setSerialService(serialService);
+            joystickListenerRight.setSerialService(serialService);
+
         } catch (Exception e) {
             Log.e(TAG, e.getMessage());
         }
