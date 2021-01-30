@@ -5,18 +5,14 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
 
-import static android.webkit.ConsoleMessage.MessageLevel.LOG;
 
 /**
  * Create notification and queue serial data while activity is not in the foreground
@@ -37,7 +33,8 @@ public class SerialService extends Service implements SerialListener {
     private final StringBuffer stringBuffer = new StringBuffer();
     private BluetoothGattCallbackImpl socket;
     private boolean connected;
-private String value;
+    private String value;
+
     public StringBuffer getStringBuffer() {
         return stringBuffer;
     }
@@ -76,10 +73,10 @@ private String value;
         handler.postDelayed(new Runnable() {
             public void run() {
                 try {
-                    write("{INIT}");
+                    write(BluetoothConstant.INITIALISATION, "");
 
                 } catch (IOException e) {
-                    Log.e(TAG,e.getMessage());
+                    Log.e(TAG, e.getMessage());
                 }
             }
         }, 3000);
@@ -93,10 +90,10 @@ private String value;
         }
     }
 
-    public void write(String data) throws IOException {
+    public void write(String key, String value) throws IOException {
         if (!connected)
             throw new IOException("not connected");
-        byte[] bytes = new String("{" + data + "}").getBytes();
+        byte[] bytes = new String("{" + key + ":" + value + "}").getBytes();
         socket.write(bytes);
     }
 
@@ -139,33 +136,38 @@ private String value;
         //message.split(":");
         String dataRead = stringBuffer.toString();
 
-        int start = dataRead.indexOf("{")+1;
+        int start = dataRead.indexOf("{") + 1;
         int end = dataRead.indexOf("}");
-if(end<start){
-    end = dataRead.indexOf("}",start);
-}
+        if (end < start) {
+            end = dataRead.indexOf("}", start);
+        }
         if (start >= 0 && end >= 0 && start < end) {
-           String message = dataRead.substring(start, end);
-           String [] split = message.split(":");
+            String message = dataRead.substring(start, end);
+            String[] split = message.split(":");
 
-           // stringBuffer.delete(start, end);
-            stringBuffer.delete(0,stringBuffer.length());
-            Log.i(TAG,message);
-            switch (split[0]){
-               case "INIT":
-                   value = split[1];
-                break;
-                case "START":
-                    connected = true;
-                    if(split.length>1) {
+            // stringBuffer.delete(start, end);
+            stringBuffer.delete(0, stringBuffer.length());
+            Log.i(TAG, message);
+            try {
+                String state = split[0];
+                switch (state) {
+                    case "I":
                         value = split[1];
-                    }
-                    break;
-                case "LOG":
-                    value = split[1];
-                    break;
-                default:
-                  Log.i(TAG,"message: "+message + " value: "+ value);
+                        break;
+                    case "C":
+                        connected = true;
+                        if (split.length > 1) {
+                            value = split[1];
+                        }
+                        break;
+                    case "L":
+                        value = split[1];
+                        break;
+                    default:
+                        Log.i(TAG, "message: " + message + " value: " + value);
+                }
+            }catch (IllegalArgumentException e){
+                Log.e(TAG,e.getMessage());
             }
         }
     }

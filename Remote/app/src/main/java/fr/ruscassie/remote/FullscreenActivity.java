@@ -110,6 +110,7 @@ public class FullscreenActivity extends AppCompatActivity  {
             BluetoothGattCallbackImpl socket = new BluetoothGattCallbackImpl(this.getApplicationContext(), device);
             serialService = new SerialService();
             textView.setText("Test socket");
+            
             serialService.connect(socket);
             joystickListenerLeft.setSerialService(serialService);
             joystickListenerRight.setSerialService(serialService);

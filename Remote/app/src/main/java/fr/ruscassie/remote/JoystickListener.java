@@ -19,8 +19,7 @@ public class JoystickListener implements JoystickView.JoystickListener{
                 double positive = (xPercent + 1)*67+25;
                 DecimalFormat df = new DecimalFormat("#");
                 try {
-
-                    serialService.write( "SERVO:"+ df.format( positive));
+                    serialService.write( BluetoothConstant.SERVO, df.format( positive));
                 } catch (IOException e) {
                   Log.e("[RIGHT]",e.getMessage());
                 }
@@ -33,7 +32,7 @@ public class JoystickListener implements JoystickView.JoystickListener{
                 DecimalFormat dfm= new DecimalFormat("#");
                 try {
 
-                    serialService.write( "MOTOR:"+ dfm.format( motor));
+                    serialService.write( BluetoothConstant.MOTOR,dfm.format( motor));
                 } catch (IOException e) {
                     Log.e("[RIGHT]",e.getMessage());
                 }
