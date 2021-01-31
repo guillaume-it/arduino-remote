@@ -3,6 +3,7 @@ package fr.ruscassie.remote;
 import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
@@ -10,8 +11,13 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
+import java.util.Timer;
+import java.util.TimerTask;
 
 
 /**
@@ -34,6 +40,8 @@ public class SerialService extends Service implements SerialListener {
     private BluetoothGattCallbackImpl socket;
     private boolean connected;
     private String value;
+    LocalDateTime now;
+    private LinkedList<Message> messageLinkedList = new LinkedList<>();
 
     public StringBuffer getStringBuffer() {
         return stringBuffer;
@@ -41,6 +49,10 @@ public class SerialService extends Service implements SerialListener {
 
     public String getValue() {
         return value;
+    }
+
+    public LinkedList<Message> getMessageLinkedList() {
+        return messageLinkedList;
     }
 
     /**
@@ -68,15 +80,15 @@ public class SerialService extends Service implements SerialListener {
     public void connect(BluetoothGattCallbackImpl socket) throws IOException {
         socket.connect(this);
         this.socket = socket;
-        connected = true;
+        // connected = true;
         Handler handler = new Handler();
+        SerialService serialService = this;
         handler.postDelayed(new Runnable() {
             public void run() {
                 try {
-                    write(BluetoothConstant.INITIALISATION, "");
-
+                    write("{I:}");
                 } catch (IOException e) {
-                    Log.e(TAG, e.getMessage());
+                  Log.e(TAG,e.getMessage());
                 }
             }
         }, 3000);
@@ -90,12 +102,63 @@ public class SerialService extends Service implements SerialListener {
         }
     }
 
-    public void write(String key, String value) throws IOException {
-        if (!connected)
-            throw new IOException("not connected");
-        byte[] bytes = new String("{" + key + ":" + value + "}").getBytes();
+    public void write(String data) throws IOException {
+//        if (!connected)
+//            throw new IOException("not connected");
+        byte[] bytes = data.getBytes();
         socket.write(bytes);
     }
+
+    public void writeBuffer(String key, Integer value) {
+        messageLinkedList.add(new Message(key, value));
+        send();
+    }
+    public void writeBuffer(String key) {
+        messageLinkedList.add(new Message(key));
+        send();
+    }
+    public void send() {
+        if(now == null) {
+            now = LocalDateTime.now();
+        }else{
+            if(LocalDateTime.now().isAfter(now.plusNanos(400000000))) {
+                now = LocalDateTime.now();
+
+                List<Message> list = new ArrayList();
+                while (!messageLinkedList.isEmpty()) {
+                    list.add(messageLinkedList.removeFirst());
+                }
+                Message messageS = new Message("S", 0);
+                Message messageM = new Message("M", 0);
+                int idM = 0, idS = 0;
+                for (Message message1 : list) {
+                    switch (message1.getKey()) {
+                        case "M":
+                            messageM.setValue(messageM.getValue() + message1.getValue());
+                            idM++;
+                            break;
+                        case "S":
+                            messageS.setValue(messageS.getValue() + message1.getValue());
+                            idS++;
+                            break;
+                    }
+                }
+                if (messageM.getValue() > 0) {
+                    messageM.setValue(messageM.getValue() / idM);
+                }
+                if (messageS.getValue() > 0) {
+                    messageS.setValue(messageS.getValue() / idS);
+                }
+                try {
+                    write("{" + messageS.getKey() + ":" + messageS.getValue() + "}");
+                    write("{" + messageM.getKey() + ":" + messageM.getValue() + "}");
+                } catch (IOException e) {
+                    Log.e(TAG, e.getMessage());
+                }
+            }
+        }
+    }
+
 
     /**
      * SerialListener
@@ -166,8 +229,8 @@ public class SerialService extends Service implements SerialListener {
                     default:
                         Log.i(TAG, "message: " + message + " value: " + value);
                 }
-            }catch (IllegalArgumentException e){
-                Log.e(TAG,e.getMessage());
+            } catch (IllegalArgumentException e) {
+                Log.e(TAG, e.getMessage());
             }
         }
     }

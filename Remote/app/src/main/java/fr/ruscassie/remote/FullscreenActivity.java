@@ -14,8 +14,10 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.TextView;
 
 import java.io.IOException;
@@ -32,6 +34,8 @@ public class FullscreenActivity extends AppCompatActivity  {
     private SerialService serialService = null;
     private JoystickListener joystickListenerRight = new JoystickListener();
     private JoystickListener joystickListenerLeft = new JoystickListener();
+private static int counter = 0;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +43,9 @@ public class FullscreenActivity extends AppCompatActivity  {
 
         Log.i(TAG, "on Create");
         setContentView(R.layout.activity_fullscreen);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getSupportActionBar().hide();
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
@@ -54,6 +61,8 @@ public class FullscreenActivity extends AppCompatActivity  {
 
         JoystickView joystickViewLeft = findViewById(R.id.joystickLeft);
         joystickViewLeft.setJoystickCallback(joystickListenerLeft);
+
+
 
     }
 
