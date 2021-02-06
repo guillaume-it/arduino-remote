@@ -2,19 +2,24 @@
 #include <stdio.h>
 #include <Servo.h>
 #include <pt.h>   // include protothread library
-static struct pt ptServo, ptMotor; // each protothread needs one of these
+static struct pt ptServoWheel, ptServoRadar, ptMotor, ptRadar; // each protothread needs one of these
 
 //Message
 const static String BLUETOOTH_INITIALISATION = "I";
 const static String BLUETOOTH_CONNECTED = "C";
-const static String BLUETOOTH_SERVO = "S";
+const static String BLUETOOTH_SERVO_WHEEL = "W";
+const static String BLUETOOTH_SERVO_RADAR = "R";
+
 const static String BLUETOOTH_MOTOR = "M";
 
 //Servo
 const static char PIN_Servo = 3;
-static uint8_t angleSettingOld = 90;
-static uint8_t angleSetting = 90;
-Servo servo;             //  Create a DC motor drive object
+static unsigned int  angleWheelSettingOld = 90;
+static unsigned int  angleWheelSetting = 90;
+static unsigned int  angleRadarSettingOld = 90;
+static unsigned int  angleRadarSetting = 90;
+Servo servoWheel;             //  Create a motor drive object for the wheel
+Servo servoRadar;             //  Create a motor drive object for the Radar
 
 //Moto
 unsigned int carSpeed_rocker = 250;
@@ -29,12 +34,17 @@ static int motorSpeedOld = 0;
 
 const static char LED_Pin = 13;
 
+/*Arduino pin is connected to the Ultrasonic sensor module*/
+const static int  ECHO_PIN = A4;
+const static int TRIG_PIN = A5;
+const int ObstacleDetection = 3;
+
 
 void setup() {
   //Bluetooth
   Serial.begin(9600);
-  servo.attach(3);
-
+  servoWheel.attach(3);
+  servoRadar.attach(10);
   //Motor
   pinMode(IN1, OUTPUT); //Motor-driven port configuration
   pinMode(IN2, OUTPUT);
@@ -45,14 +55,23 @@ void setup() {
   digitalWrite(ENA, HIGH);  //Enable left motor
   digitalWrite(ENB, HIGH);  //Enable right motor
 
+  pinMode(ECHO_PIN, INPUT); //Ultrasonic module initialization
+  pinMode(TRIG_PIN, OUTPUT);
+  
   //Thread
-  PT_INIT(&ptServo);  // initialise the two
-  PT_INIT(&ptMotor);  // protothread variables
+  PT_INIT(&ptServoWheel);  
+  PT_INIT(&ptServoRadar);
+  PT_INIT(&ptMotor);  
+  PT_INIT(&ptRadar); 
+
 }
 
 void loop() {
-  threadServoControl(&ptServo, 10);
+  threadServoWheelControl(&ptServoWheel, 10);
+  threadServoRadarControl(&ptServoRadar, 10);
   threadMotorControl(&ptMotor, 10);
+  threadRadarControl(&ptRadar, 10);
+  
   while ( Serial.available() > 0) //Forcibly wait for a frame of data to finish receiving
   {
     cutMessage(Serial.readString());
@@ -84,8 +103,12 @@ void manageMessage(String message, int end, int idSeparator)
   if (BLUETOOTH_INITIALISATION == key) {
     Serial.println("{" + BLUETOOTH_CONNECTED + ":}");
     Serial.flush();
-  } else if (BLUETOOTH_SERVO == key) {
-    angleSetting = value.toInt();
+  } else if (BLUETOOTH_SERVO_WHEEL == key) {
+    Serial.println("{" + BLUETOOTH_SERVO_WHEEL + " " + value + "}");
+    Serial.flush();
+    angleWheelSetting = value.toInt();
+  } else if (BLUETOOTH_SERVO_RADAR == key) {
+    angleRadarSetting = value.toInt();
   } else if (BLUETOOTH_MOTOR == key) {
     motorSpeed = value.toInt();
     Serial.println("{BLUETOOTH_MOTOR " + key + " motorSpeed " + motorSpeed + "}");
@@ -95,26 +118,42 @@ void manageMessage(String message, int end, int idSeparator)
 /*
   Servo Control angle Setting
 */
-void servoControl(uint8_t angle) {
-  if (angleSettingOld != angle) {
-    angleSettingOld = angle;
+void servoWheelControl(unsigned int  angle) {
+  if (angleWheelSettingOld != angle) {
+    angleWheelSettingOld = angle;
     if (angle > 175)
     {
       angle = 175;
     }
-    else if (angle < 5)
+    else if (angle < 0)
     {
-      angle = 5;
+      angle = 0;
     }
-    servo.write(angle); //sets the servo position according to the  value
+    servoWheel.write(angle); //sets the servo position according to the  value
   }
 }
+
+void servoRadarControl(unsigned int angle) {
+  //  if (angleRadarSettingOld != angle) {
+  //    angleRadarSettingOld = angle;
+  //  if (angle > 175)
+  //  {
+  //    angle = 175;
+  //  }
+  //  else if (angle < 5)
+  //  {
+  //    angle = 5;
+  //  }
+  servoRadar.write(angle); //sets the servo position according to the  value
+  //  }
+}
+
 
 
 /*
   Thread to drive the servo
 */
-static int threadServoControl(struct pt *pt, int interval)
+static int threadServoWheelControl(struct pt *pt, int interval)
 {
   static unsigned long timestamp = 0;
   PT_BEGIN(pt);
@@ -124,11 +163,25 @@ static int threadServoControl(struct pt *pt, int interval)
        and if false the function exits after that. */
     PT_WAIT_UNTIL(pt, millis() - timestamp > interval);
     timestamp = millis(); // take a new timestamp
-    servoControl(angleSetting);
+    servoWheelControl(angleWheelSetting);
   }
   PT_END(pt);
 }
 
+static int threadServoRadarControl(struct pt *pt, int interval)
+{
+  static unsigned long timestamp = 0;
+  PT_BEGIN(pt);
+  while (1) { // never stop
+    /* each time the function is called the second boolean
+       argument "millis() - timestamp > interval" is re-evaluated
+       and if false the function exits after that. */
+    PT_WAIT_UNTIL(pt, millis() - timestamp > interval);
+    timestamp = millis(); // take a new timestamp
+    servoRadarControl(angleRadarSetting);
+  }
+  PT_END(pt);
+}
 
 static int threadMotorControl(struct pt *pt, int interval)
 {
@@ -152,6 +205,25 @@ static int threadMotorControl(struct pt *pt, int interval)
   }
   PT_END(pt);
 }
+
+static int threadRadarControl(struct pt *pt, int interval)
+{
+  static unsigned long timestamp = 0;
+  PT_BEGIN(pt);
+  while (1) { // never stop
+    /* each time the function is called the second boolean
+       argument "millis() - timestamp > interval" is re-evaluated
+       and if false the function exits after that. */
+    PT_WAIT_UNTIL(pt, millis() - timestamp > interval);
+    timestamp = millis(); // take a new timestamp
+    unsigned int get_Distance = getDistance();
+    Serial.println("{ get_Distance: " + (String)get_Distance + "}");
+    Serial.flush();
+  }
+  PT_END(pt);
+}
+
+
 /*
   Control motor：Car movement forward
 */
@@ -181,4 +253,24 @@ void back(bool debug, int16_t in_carSpeed)
   digitalWrite(IN4, LOW);
   if (debug)
     Serial.println("Go back!");
+}
+
+/*ULTRASONIC*/
+unsigned int getDistance(void)
+{ //Getting distance
+  static unsigned int tempda = 0;
+  unsigned int tempda_x = 0;
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+  tempda_x = ((unsigned int)pulseIn(ECHO_PIN, HIGH) / 58);
+  //tempda = tempda_x;
+  if (tempda_x > 150)
+  {
+    tempda_x = 150;
+  }
+  // return tempda;
+  return tempda_x;
 }
