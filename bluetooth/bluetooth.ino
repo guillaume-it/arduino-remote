@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <Servo.h>
 #include <pt.h>   // include protothread library
+
+// Thread
 static struct pt ptServoWheel, ptMotor, ptRadar; // each protothread needs one of these
 
 //Message
@@ -30,6 +32,8 @@ const static char IN3 = 9;
 const static char IN4 = 11;
 static int motorSpeed = 0;
 static int motorSpeedOld = 0;
+static int rotation = 1; // forward / backward
+static int rotationOld = 0;
 
 const static char LED_Pin = 13;
 
@@ -167,9 +171,9 @@ static int threadMotorControl(struct pt *pt, int interval)
       motorSpeedOld = motorSpeed;
 
       if (motorSpeed >= 0) {
-        forward(false, motorSpeed);
+        rotationMotor(1, motorSpeed);
       } else {
-        back(false, motorSpeed * -1);
+        rotationMotor(-1, motorSpeed * -1);
       }
     }
   }
@@ -205,33 +209,26 @@ static int threadRadarControl(struct pt *pt, int interval)
 /*
   Control motor：Car movement forward
 */
-void forward(bool debug, int16_t in_carSpeed)
+void rotationMotor(int rotation, int in_carSpeed)
 {
-  Serial.println("{motor avant " + String(in_carSpeed) + "}");
   analogWrite(ENA, in_carSpeed);
   analogWrite(ENB, in_carSpeed);
-  digitalWrite(IN1, HIGH);
-  digitalWrite(IN2, LOW);
-  digitalWrite(IN3, LOW);
-  digitalWrite(IN4, HIGH);
-  if (debug)
-    Serial.println("Go forward!");
+
+  if (rotation == 1 && rotationOld != rotation) {
+    rotationOld = 1;
+    digitalWrite(IN1, HIGH);
+    digitalWrite(IN2, LOW);
+    digitalWrite(IN3, LOW);
+    digitalWrite(IN4, HIGH);
+  } else if (rotation == -1 && rotationOld != rotation) {
+    rotationOld = -1;
+    digitalWrite(IN1, LOW);
+    digitalWrite(IN2, HIGH);
+    digitalWrite(IN3, HIGH);
+    digitalWrite(IN4, LOW);
+  }
 }
-/*
-  Control motor：Car moving backwards
-*/
-void back(bool debug, int16_t in_carSpeed)
-{
-  Serial.println("{motor arriere " + String(in_carSpeed) + "}");
-  analogWrite(ENA, in_carSpeed);
-  analogWrite(ENB, in_carSpeed);
-  digitalWrite(IN1, LOW);
-  digitalWrite(IN2, HIGH);
-  digitalWrite(IN3, HIGH);
-  digitalWrite(IN4, LOW);
-  if (debug)
-    Serial.println("Go back!");
-}
+
 
 /*ULTRASONIC*/
 double getDistance(void)
