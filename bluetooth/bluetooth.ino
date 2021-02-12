@@ -1,11 +1,7 @@
-//#include "hardwareSerial.h"
+
 #include <stdio.h>
 #include <Servo.h>
-#include <pt.h>   // include protothread library
-#include "DigitalIO.h"
-
-// Thread
-static struct pt ptServoWheel, ptMotor, ptRadar; // each protothread needs one of these
+#include "hardwareSerial.h"
 
 //Message
 const static String BLUETOOTH_INITIALISATION = "I";
@@ -43,6 +39,8 @@ const static int  ECHO_PIN = A4;
 const static int TRIG_PIN = A5;
 const int ObstacleDetection = 3;
 static boolean radarWork = false;
+// how much serial data we expect before a newline
+const unsigned int MAX_INPUT = 50;
 
 void setup() {
   //Bluetooth
@@ -51,42 +49,90 @@ void setup() {
   servoRadar.attach(10);
 
   //Motor
-  fastPinMode(IN1, OUTPUT); //Motor-driven port configuration
-  fastPinMode(IN2, OUTPUT);
-  fastPinMode(IN3, OUTPUT);
-  fastPinMode(IN4, OUTPUT);
-  fastPinMode(ENA, OUTPUT);
-  fastPinMode(ENB, OUTPUT);
-  fastDigitalWrite(ENA, HIGH);  //Enable left motor
-  fastDigitalWrite(ENB, HIGH);  //Enable right motor
+  digitalWrite(IN1, OUTPUT); //Motor-driven port configuration
+  digitalWrite(IN2, OUTPUT);
+  digitalWrite(IN3, OUTPUT);
+  digitalWrite(IN4, OUTPUT);
+  digitalWrite(ENA, OUTPUT);
+  digitalWrite(ENB, OUTPUT);
+  pinMode(ENA, HIGH);  //Enable left motor
+  pinMode(ENB, HIGH);  //Enable right motor
 
-  fastPinMode(ECHO_PIN, INPUT); //Ultrasonic module initialization
-  fastPinMode(TRIG_PIN, OUTPUT);
-
-  //Thread
-  PT_INIT(&ptServoWheel);
-  PT_INIT(&ptMotor);
-  PT_INIT(&ptRadar);
-
+  digitalWrite(ECHO_PIN, INPUT); //Ultrasonic module initialization
+  digitalWrite(TRIG_PIN, OUTPUT);
 }
 
 void loop() {
-  threadServoWheelControl(&ptServoWheel, 10);
-  threadMotorControl(&ptMotor, 10);
-  threadRadarControl(&ptRadar, 10);
 
-  while ( Serial.available() > 0) //Forcibly wait for a frame of data to finish receiving
-  {
-    cutMessage(Serial.readString());
+  if (motorSpeed != motorSpeedOld) {
+    motorSpeedOld = motorSpeed;
+
+    if (motorSpeed >= 0) {
+      rotationMotor(1, motorSpeed);
+    } else {
+      rotationMotor(-1, motorSpeed * -1);
+    }
+  }
+  servoWheelControl(angleWheelSetting);
+  if (radarWork) {
+    angleRadarSetting += 10;
+    if (angleRadarSetting > 180) {
+      angleRadarSetting = 0;
+    }
+
+    servoRadar.write(angleRadarSetting);
+    double distance = getDistance();
+    //  Serial.println("{ get_Distance: " + (String)distance + "}");
+    // Serial.flush();
   }
 }
+
+// https://www.arduino.cc/en/Tutorial/BuiltInExamples/SerialEvent
+void serialEvent() {
+  while ( Serial.available() > 0) //Forcibly wait for a frame of data to finish receiving
+  {
+    // https://arduino.stackexchange.com/questions/22762/why-does-the-arduino-respond-so-slow-to-serial-input
+    //  cutMessage(Serial.readString());
+    static char input_line [MAX_INPUT];
+    static unsigned int input_pos = 0;
+    const byte inByte = Serial.read();
+    switch (inByte)
+    {
+
+      case '\n':   // end of text
+        input_line [input_pos] = 0;  // terminating null byte
+
+        // terminator reached! process input_line here ...
+        // process_data (input_line);
+
+        cutMessage(input_line);
+        // reset buffer for next time
+        input_pos = 0;
+        break;
+
+      case '\r':   // discard carriage return
+        break;
+
+      default:
+        // keep adding if not full ... allow for terminating null byte
+        if (input_pos < (MAX_INPUT - 1))
+          input_line [input_pos++] = inByte;
+        break;
+
+    }  // end of switch
+
+
+  }
+}
+
+
 void cutMessage(String message) {
   int start = message.indexOf('{');
   int endd = message.indexOf('}');
   int idSeparator = message.indexOf(':');
 
-  Serial.println("{" + message + "}");
-  Serial.flush();
+  //  Serial.println("{" + message + "}");
+  //  Serial.flush();
   if (start >= 0 && start >= -1) {
     manageMessage(message.substring(start + 1, endd), endd, idSeparator);
     String newMessage = message.substring(endd + 1, message.length());
@@ -100,21 +146,21 @@ void manageMessage(String message, int end, int idSeparator)
 
   String key = message.substring(0, idSeparator - 1);
   String value = message.substring(idSeparator , end);
-  Serial.println("|key:" + key + " value:" + value + "|");
-  Serial.flush();
+  // Serial.println("|key:" + key + " value:" + value + "|");
+  // Serial.flush();
 
   if (BLUETOOTH_INITIALISATION == key) {
-    Serial.println("{" + BLUETOOTH_CONNECTED + ":}");
-    Serial.flush();
+    // Serial.println("{" + BLUETOOTH_CONNECTED + ":}");
+    // Serial.flush();
   } else if (BLUETOOTH_SERVO_WHEEL == key) {
-    Serial.println("{" + BLUETOOTH_SERVO_WHEEL + " " + value + "}");
-    Serial.flush();
+    // Serial.println("{" + BLUETOOTH_SERVO_WHEEL + " " + value + "}");
+    // Serial.flush();
     angleWheelSetting = value.toInt();
   } else if (BLUETOOTH_MOTOR == key) {
     motorSpeed = value.toInt();
-    Serial.println("{BLUETOOTH_MOTOR " + key + " motorSpeed " + motorSpeed + "}");
+    // Serial.println("{BLUETOOTH_MOTOR " + key + " motorSpeed " + motorSpeed + "}");
   } else if (BLUETOOTH_RADAR == key) {
-    Serial.println("{BLUETOOTH_RADAR " + value + "}");
+    // Serial.println("{BLUETOOTH_RADAR " + value + "}");
     radarWork = value.toInt();
   }
 }
@@ -135,75 +181,9 @@ void servoWheelControl(unsigned int  angle) {
     {
       angle = 25;
     }
-    Serial.println("{servoWheelControl angle:" + (String) angle + "}");
+    // Serial.println("{servoWheelControl angle:" + (String) angle + "}");
     servoWheel.write(angle); //sets the servo position according to the  value
   }
-}
-
-/*
-  Thread to drive the servo
-*/
-static int threadServoWheelControl(struct pt *pt, int interval)
-{
-  static unsigned long timestamp = 0;
-  PT_BEGIN(pt);
-  while (1) { // never stop
-    /* each time the function is called the second boolean
-       argument "millis() - timestamp > interval" is re-evaluated
-       and if false the function exits after that. */
-    PT_WAIT_UNTIL(pt, millis() - timestamp > interval);
-    timestamp = millis(); // take a new timestamp
-    servoWheelControl(angleWheelSetting);
-  }
-  PT_END(pt);
-}
-
-static int threadMotorControl(struct pt *pt, int interval)
-{
-  static unsigned long timestamp = 0;
-  PT_BEGIN(pt);
-  while (1) { // never stop
-    /* each time the function is called the second boolean
-       argument "millis() - timestamp > interval" is re-evaluated
-       and if false the function exits after that. */
-    PT_WAIT_UNTIL(pt, millis() - timestamp > interval);
-    timestamp = millis(); // take a new timestamp
-    if (motorSpeed != motorSpeedOld) {
-      motorSpeedOld = motorSpeed;
-
-      if (motorSpeed >= 0) {
-        rotationMotor(1, motorSpeed);
-      } else {
-        rotationMotor(-1, motorSpeed * -1);
-      }
-    }
-  }
-  PT_END(pt);
-}
-
-static int threadRadarControl(struct pt *pt, int interval)
-{
-  static unsigned long timestamp = 0;
-  PT_BEGIN(pt);
-  while (1) { // never stop
-    /* each time the function is called the second boolean
-       argument "millis() - timestamp > interval" is re-evaluated
-       and if false the function exits after that. */
-    PT_WAIT_UNTIL(pt, millis() - timestamp > interval);
-    timestamp = millis(); // take a new timestamp
-    if (radarWork) {
-      angleRadarSetting += 10;
-      if (angleRadarSetting > 180) {
-        angleRadarSetting = 0;
-      }
-
-      servoRadar.write(angleRadarSetting);
-      double distance = getDistance();
-      //  Serial.println("{ get_Distance: " + (String)distance + "}");
-      // Serial.flush();
-    }
-  }
-  PT_END(pt);
 }
 
 /*
@@ -216,16 +196,16 @@ void rotationMotor(int rotation, int in_carSpeed)
 
   if (rotation == 1 && rotationOld != rotation) {
     rotationOld = 1;
-    fastDigitalWrite(IN1, HIGH); // 7 -> PD7
-    fastDigitalWrite(IN2, LOW); // 8 -> PB0
-    fastDigitalWrite(IN3, LOW); // 9 -> PB1
-    fastDigitalWrite(IN4, HIGH); // 11 -> PB3
+    digitalWrite(IN1, HIGH); // 7 -> PD7
+    digitalWrite(IN2, LOW); // 8 -> PB0
+    digitalWrite(IN3, LOW); // 9 -> PB1
+    digitalWrite(IN4, HIGH); // 11 -> PB3
   } else if (rotation == -1 && rotationOld != rotation) {
     rotationOld = -1;
-    fastDigitalWrite(IN1, LOW); // 7 ->  PD7
-    fastDigitalWrite(IN2, HIGH); // 8 -> PB0
-    fastDigitalWrite(IN3, HIGH); // 9 -> PB1
-    fastDigitalWrite(IN4, LOW); // 11 -> PB3
+    digitalWrite(IN1, LOW); // 7 ->  PD7
+    digitalWrite(IN2, HIGH); // 8 -> PB0
+    digitalWrite(IN3, HIGH); // 9 -> PB1
+    digitalWrite(IN4, LOW); // 11 -> PB3
   }
 }
 
