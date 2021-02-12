@@ -99,7 +99,7 @@ void serialEvent() {
     switch (inByte)
     {
 
-      case '\n':   // end of text
+      case '}':   // end of text
         input_line [input_pos] = 0;  // terminating null byte
 
         // terminator reached! process input_line here ...
@@ -128,7 +128,7 @@ void serialEvent() {
 
 void cutMessage(String message) {
   int start = message.indexOf('{');
-  int endd = message.indexOf('}');
+  int endd = message.length();//.indexOf('}');
   int idSeparator = message.indexOf(':');
 
   //  Serial.println("{" + message + "}");
@@ -146,8 +146,8 @@ void manageMessage(String message, int end, int idSeparator)
 
   String key = message.substring(0, idSeparator - 1);
   String value = message.substring(idSeparator , end);
-  // Serial.println("|key:" + key + " value:" + value + "|");
-  // Serial.flush();
+   Serial.println("|key:" + key + " value:" + value + "|");
+   Serial.flush();
 
   if (BLUETOOTH_INITIALISATION == key) {
     // Serial.println("{" + BLUETOOTH_CONNECTED + ":}");

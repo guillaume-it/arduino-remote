@@ -2,7 +2,7 @@ package fr.ruscassie.remote;
 
 public class Message {
     private String key;
-    private  Integer value;
+    private Integer value;
 
     public Message(String key, Integer value) {
         this.key = key;

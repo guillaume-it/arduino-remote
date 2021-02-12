@@ -121,37 +121,38 @@ public class SerialService extends Service implements SerialListener {
         if(now == null) {
             now = LocalDateTime.now();
         }else{
-            if(LocalDateTime.now().isAfter(now.plusNanos(400000000))) {
+            if(LocalDateTime.now().isAfter(now.plusNanos(50000000))) {
                 now = LocalDateTime.now();
 
                 List<Message> list = new ArrayList();
                 while (!messageLinkedList.isEmpty()) {
                     list.add(messageLinkedList.removeFirst());
                 }
-                Message messageS = new Message("S", 0);
+                Message messageW = new Message("W", 0);
                 Message messageM = new Message("M", 0);
-                int idM = 0, idS = 0;
+                int idM = 0, idW = 0;
                 for (Message message1 : list) {
                     switch (message1.getKey()) {
                         case "M":
                             messageM.setValue(messageM.getValue() + message1.getValue());
                             idM++;
                             break;
-                        case "S":
-                            messageS.setValue(messageS.getValue() + message1.getValue());
-                            idS++;
+                        case "W":
+                            messageW.setValue(messageW.getValue() + message1.getValue());
+                            idW++;
                             break;
                     }
                 }
                 if (messageM.getValue() > 0) {
                     messageM.setValue(messageM.getValue() / idM);
                 }
-                if (messageS.getValue() > 0) {
-                    messageS.setValue(messageS.getValue() / idS);
+                if (messageW.getValue() > 0) {
+                    messageW.setValue(messageW.getValue() / idW);
                 }
                 try {
-                    write("{" + messageS.getKey() + ":" + messageS.getValue() + "}");
-                    write("{" + messageM.getKey() + ":" + messageM.getValue() + "}");
+                    Log.i(TAG,"{" + messageW.getKey() + ":" + messageW.getValue() + "}{" + messageM.getKey() + ":" + messageM.getValue() + "}");
+                    write("{" + messageW.getKey() + ":" + messageW.getValue() + "}");
+                            write("{" + messageM.getKey() + ":" + messageM.getValue() + "}");
                 } catch (IOException e) {
                     Log.e(TAG, e.getMessage());
                 }
