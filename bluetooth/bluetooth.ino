@@ -2,7 +2,10 @@
 #include <stdio.h>
 #include <Servo.h>
 #include <pt.h>   // include protothread library
-#include "DigitalIO.h"
+//#include "DigitalIO.h"
+
+// https://www.codeproject.com/Articles/732646/Fast-digital-I-O-for-Arduino
+#include <arduino2.h>
 
 // Thread
 static struct pt ptServoWheel, ptMotor, ptRadar; // each protothread needs one of these
@@ -51,17 +54,17 @@ void setup() {
   servoRadar.attach(10);
 
   //Motor
-  fastPinMode(IN1, OUTPUT); //Motor-driven port configuration
-  fastPinMode(IN2, OUTPUT);
-  fastPinMode(IN3, OUTPUT);
-  fastPinMode(IN4, OUTPUT);
-  fastPinMode(ENA, OUTPUT);
-  fastPinMode(ENB, OUTPUT);
-  fastDigitalWrite(ENA, HIGH);  //Enable left motor
-  fastDigitalWrite(ENB, HIGH);  //Enable right motor
+  pinMode2(IN1, OUTPUT); //Motor-driven port configuration
+  pinMode2(IN2, OUTPUT);
+  pinMode2(IN3, OUTPUT);
+  pinMode2(IN4, OUTPUT);
+  pinMode2(ENA, OUTPUT);
+  pinMode2(ENB, OUTPUT);
+  digitalWrite2(ENA, HIGH);  //Enable left motor
+  digitalWrite2(ENB, HIGH);  //Enable right motor
 
-  fastPinMode(ECHO_PIN, INPUT); //Ultrasonic module initialization
-  fastPinMode(TRIG_PIN, OUTPUT);
+  digitalWrite2(ECHO_PIN, INPUT); //Ultrasonic module initialization
+  digitalWrite2(TRIG_PIN, OUTPUT);
 
   //Thread
   PT_INIT(&ptServoWheel);
@@ -216,16 +219,16 @@ void rotationMotor(int rotation, int in_carSpeed)
 
   if (rotation == 1 && rotationOld != rotation) {
     rotationOld = 1;
-    fastDigitalWrite(IN1, HIGH); // 7 -> PD7
-    fastDigitalWrite(IN2, LOW); // 8 -> PB0
-    fastDigitalWrite(IN3, LOW); // 9 -> PB1
-    fastDigitalWrite(IN4, HIGH); // 11 -> PB3
+    digitalWrite2(IN1, HIGH); // 7 -> PD7
+    digitalWrite2(IN2, LOW); // 8 -> PB0
+    digitalWrite2(IN3, LOW); // 9 -> PB1
+    digitalWrite2(IN4, HIGH); // 11 -> PB3
   } else if (rotation == -1 && rotationOld != rotation) {
     rotationOld = -1;
-    fastDigitalWrite(IN1, LOW); // 7 ->  PD7
-    fastDigitalWrite(IN2, HIGH); // 8 -> PB0
-    fastDigitalWrite(IN3, HIGH); // 9 -> PB1
-    fastDigitalWrite(IN4, LOW); // 11 -> PB3
+    digitalWrite2(IN1, LOW); // 7 ->  PD7
+    digitalWrite2(IN2, HIGH); // 8 -> PB0
+    digitalWrite2(IN3, HIGH); // 9 -> PB1
+    digitalWrite2(IN4, LOW); // 11 -> PB3
   }
 }
 
