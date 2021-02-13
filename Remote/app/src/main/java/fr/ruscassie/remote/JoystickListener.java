@@ -16,8 +16,8 @@ public class JoystickListener implements JoystickView.JoystickListener{
                 //0 1 2
                 if(serialService != null) {
 
-                    Float positive = (1+xPercent) * 125;
-                //    Log.i(TAG, "X percent: " + xPercent +"Servo: "+positive);
+                    Float positive = (1+(xPercent*-1) )* 125;
+                //    Log.i(TAG, "Joys X percent: " + xPercent +"Servo: "+positive);
                     serialService.writeBuffer(BluetoothConstant.WHEEL,positive.intValue());
                 }
 
@@ -26,8 +26,8 @@ public class JoystickListener implements JoystickView.JoystickListener{
                // Log.d("Left Joystick", "X percent: " + xPercent + " Y percent: " + yPercent);
                 if(serialService != null) {
 
-                    Float motor = yPercent  * 255;
-                 //    Log.i(TAG,"Y percent: " + yPercent +"Motor: "+motor);
+                    Float motor = yPercent  * -255;
+                 //   Log.i(TAG,"Y percent: " + yPercent +"Motor: "+motor);
                     serialService.writeBuffer(BluetoothConstant.MOTOR, motor.intValue());
                 }
 

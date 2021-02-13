@@ -191,6 +191,10 @@ void servoWheelControl(unsigned int  angle) {
 */
 void rotationMotor(int rotation, int in_carSpeed)
 {
+if(in_carSpeed < 50){
+  in_carSpeed = 0;
+}
+  
   analogWrite(ENA, in_carSpeed);
   analogWrite(ENB, in_carSpeed);
 

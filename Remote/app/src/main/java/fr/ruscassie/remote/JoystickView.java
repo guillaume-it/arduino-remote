@@ -40,6 +40,7 @@ public class JoystickView extends SurfaceView implements SurfaceHolder.Callback,
         super(context);
         getHolder().addCallback(this);
         setOnTouchListener(this);
+
         if(context instanceof JoystickListener)
             joystickCallback = (JoystickListener) context;
     }
@@ -134,9 +135,9 @@ public class JoystickView extends SurfaceView implements SurfaceHolder.Callback,
                     joystickCallback.onJoystickMoved((constrainedX-centerX)/baseRadius, (constrainedY-centerY)/baseRadius, getId());
                 }
             }
-            else
-                drawJoystick(centerX, centerY);
-                joystickCallback.onJoystickMoved(0,0,getId());
+//            else
+//                drawJoystick(centerX, centerY);
+//                joystickCallback.onJoystickMoved(0,0,getId());
         }
         return true;
     }

@@ -128,34 +128,49 @@ public class SerialService extends Service implements SerialListener {
                 while (!messageLinkedList.isEmpty()) {
                     list.add(messageLinkedList.removeFirst());
                 }
-                Message messageW = new Message("W", 0);
-                Message messageM = new Message("M", 0);
+                Message messageM = null;
+                Message messageW = null;
                 int idM = 0, idW = 0;
                 for (Message message1 : list) {
                     switch (message1.getKey()) {
                         case "M":
+                            if(messageM == null) {
+                                messageM = new Message("M", 0);
+                            }
                             messageM.setValue(messageM.getValue() + message1.getValue());
                             idM++;
                             break;
                         case "W":
+                            if(messageW == null) {
+                                 messageW = new Message("W", 0);
+                            }
                             messageW.setValue(messageW.getValue() + message1.getValue());
                             idW++;
                             break;
                     }
                 }
-                if (messageM.getValue() > 0) {
+                if (messageM != null ) {
                     messageM.setValue(messageM.getValue() / idM);
+                    try {
+                        write(   "{" + messageM.getKey() + ":" + messageM.getValue() + "}");
+                        Log.i(TAG,"WRITE {" + messageM.getKey() + ":" + messageM.getValue() + "}");
+                    } catch (IOException e) {
+                        Log.e(TAG, e.getMessage());
+                    }
                 }
-                if (messageW.getValue() > 0) {
+                if (messageW != null) {
                     messageW.setValue(messageW.getValue() / idW);
+                    try {
+                        write("{" + messageW.getKey() + ":" + messageW.getValue() + "}");
+                        Log.i(TAG,"WRITE {" + messageW.getKey() + ":" + messageW.getValue() +"}");
+                    } catch (IOException e) {
+                        Log.e(TAG, e.getMessage());
+                    }
                 }
-                try {
-                    Log.i(TAG,"{" + messageW.getKey() + ":" + messageW.getValue() + "}{" + messageM.getKey() + ":" + messageM.getValue() + "}");
-                    write("{" + messageW.getKey() + ":" + messageW.getValue() + "}");
-                            write("{" + messageM.getKey() + ":" + messageM.getValue() + "}");
-                } catch (IOException e) {
-                    Log.e(TAG, e.getMessage());
-                }
+
+
+
+
             }
         }
     }
