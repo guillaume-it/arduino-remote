@@ -100,6 +100,7 @@ void serialEvent() {
     {
 
       case '}':   // end of text
+        input_line [input_pos++] = inByte;
         input_line [input_pos] = 0;  // terminating null byte
 
         // terminator reached! process input_line here ...
@@ -108,9 +109,6 @@ void serialEvent() {
         cutMessage(input_line);
         // reset buffer for next time
         input_pos = 0;
-        break;
-
-      case '\r':   // discard carriage return
         break;
 
       default:
@@ -128,26 +126,26 @@ void serialEvent() {
 
 void cutMessage(String message) {
   int start = message.indexOf('{');
-  int endd = message.length();//.indexOf('}');
+  int endd = message.indexOf('}');
   int idSeparator = message.indexOf(':');
 
-  //  Serial.println("{" + message + "}");
-  //  Serial.flush();
+  Serial.println("{L: message=" + message + " start=" + start + " endd=" + endd + " idSeparator=" + idSeparator + "}");
+  Serial.flush();
   if (start >= 0 && start >= -1) {
-    manageMessage(message.substring(start + 1, endd), endd, idSeparator);
+    manageMessage(message.substring(start + 1, endd));
     String newMessage = message.substring(endd + 1, message.length());
     if (newMessage.indexOf('{') >= 0 && newMessage.indexOf('}') >= 0) {
       cutMessage(newMessage);
     }
   }
 }
-void manageMessage(String message, int end, int idSeparator)
+void manageMessage(String message)
 {
-
-  String key = message.substring(0, idSeparator - 1);
-  String value = message.substring(idSeparator , end);
-   Serial.println("|key:" + key + " value:" + value + "|");
-   Serial.flush();
+  int idSeparator = message.indexOf(':');
+  String key = message.substring(0, idSeparator );
+  String value = message.substring(idSeparator+1 , message.length());
+  Serial.println("{key=" + key + " value=" + value + "}");
+  Serial.flush();
 
   if (BLUETOOTH_INITIALISATION == key) {
     // Serial.println("{" + BLUETOOTH_CONNECTED + ":}");
@@ -191,10 +189,10 @@ void servoWheelControl(unsigned int  angle) {
 */
 void rotationMotor(int rotation, int in_carSpeed)
 {
-if(in_carSpeed < 50){
-  in_carSpeed = 0;
-}
-  
+  if (in_carSpeed < 50) {
+    in_carSpeed = 0;
+  }
+
   analogWrite(ENA, in_carSpeed);
   analogWrite(ENB, in_carSpeed);
 
