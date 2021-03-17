@@ -1,4 +1,4 @@
-
+#include <Thread.h>
 #include <stdio.h>
 #include <Servo.h>
 #include "hardwareSerial.h"
@@ -38,9 +38,10 @@ const static char LED_Pin = 13;
 const static int  ECHO_PIN = A4;
 const static int TRIG_PIN = A5;
 const int ObstacleDetection = 3;
-static boolean radarWork = false;
+static boolean radarWork = true ;
 // how much serial data we expect before a newline
 const unsigned int MAX_INPUT = 50;
+Thread threadRadar = Thread();
 
 void setup() {
   //Bluetooth
@@ -58,8 +59,12 @@ void setup() {
   pinMode(ENA, HIGH);  //Enable left motor
   pinMode(ENB, HIGH);  //Enable right motor
 
-  digitalWrite(ECHO_PIN, INPUT); //Ultrasonic module initialization
-  digitalWrite(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT); //Ultrasonic module initialization
+  pinMode(TRIG_PIN, OUTPUT);
+
+
+  threadRadar.setInterval(100);
+  threadRadar.onRun(callbackRadar);
 }
 
 void loop() {
@@ -74,16 +79,12 @@ void loop() {
     }
   }
   servoWheelControl(angleWheelSetting);
-  if (radarWork) {
-    angleRadarSetting += 10;
-    if (angleRadarSetting > 180) {
-      angleRadarSetting = 0;
-    }
 
-    servoRadar.write(angleRadarSetting);
-    double distance = getDistance();
-    //  Serial.println("{ get_Distance: " + (String)distance + "}");
-    // Serial.flush();
+
+  // First check if our Thread should be run
+  if (threadRadar.shouldRun()) {
+    // Yes, the Thread should run, let's run it
+    threadRadar.run();
   }
 }
 
@@ -143,7 +144,7 @@ void manageMessage(String message)
 {
   int idSeparator = message.indexOf(':');
   String key = message.substring(0, idSeparator );
-  String value = message.substring(idSeparator+1 , message.length());
+  String value = message.substring(idSeparator + 1 , message.length());
   Serial.println("{key=" + key + " value=" + value + "}");
   Serial.flush();
 
@@ -224,4 +225,18 @@ double getDistance(void)
   double distance = duration * 0.034 / 2;
 
   return distance;
+}
+
+void callbackRadar() {
+  if (radarWork) {
+    angleRadarSetting += 10;
+    if (angleRadarSetting > 180) {
+      angleRadarSetting = 0;
+    }
+
+    servoRadar.write(angleRadarSetting);
+    double distance = getDistance();
+    Serial.println("{L: Distance=" + (String)distance + " Angle="+ angleRadarSetting+"}");
+    Serial.flush();
+  }
 }
